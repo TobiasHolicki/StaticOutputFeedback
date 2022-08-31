@@ -13,13 +13,6 @@
 clc
 clear
 
-% Addpath for auxiliary functions and Complib
-%addpath(genpath('../AuxiliaryFunctions'));
-addpath(genpath('../../../../Matlab/AuxiliaryFunctions'))
-addpath(genpath('../../../../Matlab/Packages/Matlab_COMPlib_r1_1'));
-addpath('C:\Program Files\Mosek\9.2\toolbox\r2015aom');
-addpath('C:\Program Files\Mosek\10.0\toolbox\r2017aom');
-addpath(genpath('../../../../Matlab/Packages/yalmip'));
 
 %% System data
 % Load system data
@@ -30,10 +23,12 @@ addpath(genpath('../../../../Matlab/Packages/yalmip'));
 sys = ss(A, [B1, B], [C1; C], [D11, D12; D21, zeros(ny, nu)]);
 %sys = c2d(sys, 0.02); % For discrete-time tests
 
-[~, ~, ga] = hinfsyn(sys, ny, nu)
+[~, ~, ga] = hinfsyn(sys, ny, nu);
 
 
-hinftest(sys, ny, nu)
+[con, ga] = hinftest(sys, ny, nu);
+ga
+hinfnorm(lft(sys, con))
 
 return
 

@@ -59,7 +59,7 @@ function [con, ga] = dual_iteration(sys, mea, act, op)
         op.max_ite_ph1 (1, 1) {mustBeInteger, mustBeNonnegative} = 10
         op.max_ite_ph2 (1, 1) {mustBeInteger, mustBeNonnegative} = 20
         op.stp_slw_prg (1, 1) {mustBeInteger, mustBeNonnegative} = 5
-        op.opt = sdpsettings('solver', 'mosek', 'verbose', 0);
+        op.opt = sdpsettings('solver', 'sdpt3', 'verbose', 1);
         op.disp {mustBeA(op.disp, "logical")} = false
         op.eps (1, 1) {mustBeNumeric} = 1e-4
         op.con {mustBeA(op.con, "ss")} = ss([])
@@ -131,30 +131,19 @@ function [con, ga] = dual_iteration(sys, mea, act, op)
     Cos =  ga;
 
     % *Optimizers*
-    t = optimize(Con, Cos);
+    t = optimize(Con, Cos, op.opt)
+
+    
+
 
     X = value(X);
     Y = value(Y);
     ga = value(ga);
     
     
-    X = [  528.7977   14.0677   10.8903  -82.2705   25.4280   64.2921   20.0852
-   14.0677   29.0870   31.8307  -58.6602    7.5963   48.9625   19.9646
-   10.8903   31.8307  136.4501    8.5842   18.3011  102.3715   78.8410
-  -82.2705  -58.6602    8.5842  777.9732  -88.6888 -222.9135    9.5882
-   25.4280    7.5963   18.3011  -88.6888  529.1399   56.5574   19.4665
-   64.2921   48.9625  102.3715 -222.9135   56.5574  560.0435  231.0430
-   20.0852   19.9646   78.8410    9.5882   19.4665  231.0430  138.6695];
-    Y = [    0.9553    0.0021   -1.0203   -0.0205   -0.0012    0.2411    0.1627
-    0.0021    0.6392   -0.9921   -0.3176    0.0854   16.3288    4.8086
-   -1.0203   -0.9921    4.8649    1.4795    0.0494   -4.9662   12.3043
-   -0.0205   -0.3176    1.4795    0.9317   -0.0116   -1.4140   -1.4154
-   -0.0012    0.0854    0.0494   -0.0116    6.3866    5.2009    3.3501
-    0.2411   16.3288   -4.9662   -1.4140    5.2009  842.5047  202.9977
-    0.1627    4.8086   12.3043   -1.4154    3.3501  202.9977  737.5330];
-    ga = 11.8455;
+ 
 
-U = inv(Y) - X;
+    U = inv(Y) - X;
     Xe = [X, U; U, -U];
 
     % Middle matrix
@@ -164,11 +153,7 @@ U = inv(Y) - X;
     % Preparations for applying elimination
     [W, U, V] = WUV(sys, act, mea, lx);
     con         = mat2ss(elimi(P, U, V, W), lx);
-
-   
-    
-con = 0;
-ga = 0;
+    ga = sqrt(ga);
 end
 
 

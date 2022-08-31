@@ -71,7 +71,6 @@ function [ Z ] = elimi(P, U, V, W)
 
     % Transform V such that the annihilator V_ looks nice
     [Tv, sv, Wv] = svd(V);
-    sv
 
     % Stuff for later
     k1 = rank(sv);
