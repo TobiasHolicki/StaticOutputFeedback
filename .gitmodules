@@ -1,0 +1,9 @@
+[submodule "YALMIP"]
+	path = YALMIP
+	url = https://github.com/yalmip/YALMIP
+[submodule "Compleib"]
+	path = Compleib
+	url = https://gitlab.mpi-magdeburg.mpg.de/mitchell/compleib/
+[submodule "SDPT3"]
+	path = SDPT3
+	url = https://github.com/Kim-ChuanToh/SDPT3
