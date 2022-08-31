@@ -1,5 +1,5 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% File    : dual_iteration.m                                              %
+% File    : primal_dual_iteration.m                                       %
 %                                                                         %
 % Author  : Tobias Holicki                                                %
 % Version : 04                                                            %
@@ -18,6 +18,10 @@
 % The design procedure is based on the dual iteration proposed in [1] and
 % which as been described in detail in the paper [2]. The phase of finding
 % a stabilizing gain is essentially from [3].
+% I took the freedom to denote this algorithm as primal dual iteration
+% since, indeed, both primal and dual controller design problems are
+% solved and to contrast this with other algorithms that only solve primal
+% problems.
 %
 % [1] Iwasaki, T., The dual iteration for fixed-order control, 1999.
 % [2] Holicki, T. and Scherer, C. W., Revisiting the dual iteration for 
@@ -50,7 +54,7 @@
 %   con         - Computed controller
 %   ga          - Computed upper bound on the closed-loop energy gain.
 %  
-function [con, ga] = dual_iteration(sys, mea, act, op)
+function [con, ga] = primal_dual_iteration(sys, mea, act, op)
     % Some sanity checks
     arguments
         sys {mustBeA(sys, "ss")}
@@ -59,7 +63,7 @@ function [con, ga] = dual_iteration(sys, mea, act, op)
         op.max_ite_ph1 (1, 1) {mustBeInteger, mustBeNonnegative} = 10
         op.max_ite_ph2 (1, 1) {mustBeInteger, mustBeNonnegative} = 20
         op.stp_slw_prg (1, 1) {mustBeInteger, mustBeNonnegative} = 5
-        op.opt = sdpsettings('solver', 'mosek', 'verbose', 0);
+        op.opt = sdpsettings('solver', 'sdpt3', 'verbose', 0);
         op.disp {mustBeA(op.disp, "logical")} = false
         op.eps (1, 1) {mustBeNumeric} = 1e-6
         op.con {mustBeA(op.con, "ss")} = ss([])

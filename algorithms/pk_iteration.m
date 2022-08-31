@@ -25,7 +25,8 @@
 % to the bounded real lemma. The idea is to alternatingly fix the involved 
 % Lyapunov matrix and the describing matrices of the controller. 
 %
-% See also svar_iteration, fo_iteration, dual_iteration, primal_iteration
+% See also svar_iteration, fo_iteration, primal_dual_iteration, 
+% primal_iteration
 %
 % ----- Input ---------------------------------------------------------- 
 %   
@@ -62,7 +63,7 @@ function [con, ga] = pk_iteration(sys, mea, act, lxc, op)
         op.max_ite_ph1 (1, 1) {mustBeInteger, mustBeNonnegative} = 200
         op.max_ite_ph2 (1, 1) {mustBeInteger, mustBeNonnegative} = 300
         op.stp_slw_prg (1, 1) {mustBeInteger, mustBeNonnegative} = 100
-        op.opt = sdpsettings('solver', 'mosek', 'verbose', 0);
+        op.opt = sdpsettings('solver', 'sdpt3', 'verbose', 0);
         op.disp {mustBeA(op.disp, "logical")} = false
         op.eps (1, 1) {mustBeNumeric} = 1e-6
         op.Aeq = []

@@ -30,7 +30,8 @@
 % [2] Ebihara, Y. et al., S-Variable Approach to LMI-Based Robust Control, 
 %     2015.
 %
-% See also pk_iteration, svar_iteration, dual_iteration, primal_iteration
+% See also pk_iteration, svar_iteration, primal_dual_iteration, 
+% primal_iteration
 %
 % ----- Input ---------------------------------------------------------- 
 %   
@@ -49,6 +50,9 @@
 %   opt         - Yalmip solver options.
 %   disp        - Displays progress and some additional information.
 %   eps         - All inequalities are rendered strict with this number.
+%   xi          - Parameter appearing in the continuous-time case after
+%                 applying projection. This parameter is kept fix over all 
+%                 iterations.
 %   Aep, beq    - These specify the equality constraints on the controller.
 %   A, b        - These specify the inequality constraints on the
 %                 controller matrices.
@@ -67,9 +71,10 @@ function [con, ga] = fo_iteration(sys, mea, act, lxc, op)
         op.max_ite_ph1 (1, 1) {mustBeInteger, mustBeNonnegative} = 200
         op.max_ite_ph2 (1, 1) {mustBeInteger, mustBeNonnegative} = 100
         op.stp_slw_prg (1, 1) {mustBeInteger, mustBeNonnegative} = 50
-        op.opt = sdpsettings('solver', 'mosek', 'verbose', 0);
+        op.opt = sdpsettings('solver', 'sdpt3', 'verbose', 0);
         op.disp {mustBeA(op.disp, "logical")} = false
         op.eps (1, 1) {mustBeNumeric} = 1e-6
+        op.xi  (1, 1) {mustBeNumeric} = 1
         op.Aeq = []
         op.beq = []
         op.A   = []
@@ -119,24 +124,27 @@ function [con, ga] = fo_iteration(sys, mea, act, lxc, op)
     ga = sdpvar(1, 1); % Upper bound on the energy gain
     X  = sdpvar(lcl);  % Lyapunov certificate
     K  = sdpvar(lxc+act, lxc+mea, 'full');      % Controller parameters
-    G  = sdpvar(3*lcl+2*err, lcl+err, 'full');  % Slack variable
-    F  = sdpvar(3*lcl+2*err, lcl+err, 'full');  % Slack variable
+    G  = sdpvar(2*lcl, lcl, 'full');  % Slack variable
+    F  = sdpvar(2*lcl, lcl, 'full');  % Slack variable
 
     % *Constraints*
     % The first constraint results from applying elimination twice
     % to generate slack variables G (first appl.) and F (second appl.)
-    Te = [-eye(lcl), Ac(K), zeros(lcl, err), Bc(K); ...
-          zeros(err, lcl), Cc(K), -eye(err), Dc(K)];
+    Te = [-eye(lcl), Ac(K), Bc(K); ...
+          zeros(err, lcl), Cc(K), Dc(K)];
     if sys.Ts == 0 % Continuous time
-        Te = [blkdiag([zeros(lcl), X; X, -r*eye(lcl)], eye(err), ...
-              -ga*eye(dis)), Te'; Te, zeros(lcl+err)];
+        Te = [blkdiag([zeros(lcl), X; X, -r*eye(lcl)], -ga*eye(dis)), ...
+              Te'; Te, blkdiag(zeros(lcl), -ga*eye(err))];
+        L  = blkdiag([op.xi*eye(lcl); eye(lcl+dis, lcl)], ...
+                     eye(lcl+err, lcl));
     else % Discrete time
-        Te = [blkdiag(X, -X - r*eye(lcl), eye(err), -ga*eye(dis)),...
-              Te'; Te, zeros(lcl+err)];
+        Te = [blkdiag(X, -X - r*eye(lcl), -ga*eye(dis)), Te'; ...
+              Te, blkdiag(zeros(lcl), -ga*eye(err))];
+        L  = blkdiag(eye(2*lcl+dis, lcl), eye(lcl+err, lcl));
     end
-    L   = blkdiag(eye(2*lcl+err), [zeros(dis, lcl+err); eye(lcl+err)]);
+    
     Te  = Te + (L * G) * (L * F)' + (L * F) * (L * G)'; 
-    Con = [Te <= -op.eps * eye(3*lcl + 2*err + dis); ...
+    Con = [Te <= -op.eps * eye(3*lcl + err + dis); ...
            X  >=  op.eps * eye(lcl)];
     % General affine constraints on the controller matrices
     if ~isempty(op.A) && ~isempty(op.b)
@@ -158,10 +166,7 @@ function [con, ga] = fo_iteration(sys, mea, act, lxc, op)
     displ('**Starting phase 1**');
     
     % *Iteratively solve LMIs*
-    Gv  = [eye(lcl), zeros(lcl, err); ...
-           zeros(lcl, lcl+err);...
-           zeros(err, lcl), eye(err); ...
-           -eye(lcl+err)]; % Initial slack variable
+    Gv  = [eye(lcl)+0.01*ones(lcl); -eye(lcl)]; % Initial slack variable
     ind = 1;
     while ind <= op.max_ite_ph1
         % Solve an LMI problem with fixed slack variable G
@@ -192,16 +197,18 @@ function [con, ga] = fo_iteration(sys, mea, act, lxc, op)
     end
     
     % Part of the slack variable
-    G  = sdpvar(2*lcl+err, lcl+err, 'full'); % Slack variable
+    G  = sdpvar(lcl, lcl, 'full'); % Slack variable
     % Constraints (corresponds to applying elimination only once)
-    L  = [G; zeros(dis, lcl+err)];
-    R  = [-eye(lcl), Ac(Kv), zeros(lcl, err), Bc(Kv); ...
-          zeros(err, lcl), Cc(Kv), -eye(err), Dc(Kv)];
+    
+    R  = [-eye(lcl), Ac(Kv), Bc(Kv), zeros(lcl, err)];
+    O  = [zeros(err, lcl), Cc(Kv), Dc(Kv)];
     if sys.Ts == 0 % Continuous time
-        Te = blkdiag([zeros(lcl), X; X, zeros(lcl)], eye(err), ...
-                     -ga * eye(dis));
+        Te = [blkdiag([zeros(lcl), X; X, zeros(lcl)], -ga * eye(dis)), ...
+              O'; O, -ga*eye(err)];
+        L  = [op.xi * G; G; zeros(dis+err, lcl)];
     else % Discrete time
-        Te = blkdiag(X, -X, eye(err), -ga * eye(dis));
+        Te = [blkdiag(X, -X, -ga*eye(dis)), O'; O, -ga*eye(err)];
+        L  = [G; zeros(lcl+dis+err, lcl)];
     end
     Con = [Te + (L * R) + (L * R)' <= -op.eps * eye(2*lcl+err+dis); ...
            X  >=  op.eps * eye(lcl)];
@@ -210,7 +217,7 @@ function [con, ga] = fo_iteration(sys, mea, act, lxc, op)
 
     % Determined solutions
     gav = sqrt(value(ga));
-    Gv  = [value(G); -eye(lcl+err)]; % The new slack variable used as
+    Gv  = [value(G); -eye(lcl)]; % The new slack variable used as
                                      % initialization for phase 2 
 
     if t.problem == 0
@@ -231,7 +238,7 @@ function [con, ga] = fo_iteration(sys, mea, act, lxc, op)
     while ind <= op.max_ite_ph2
         % Solve an LMI problem with fixed slack variable G
         sol      = YOP2({0, Gv});
-        gav(ind) = sqrt(sol{1});
+        gav(ind) = sol{1};
         Gv       = sol{4}; % = F, possible due to the Hermitian part
 
         % Display progress
