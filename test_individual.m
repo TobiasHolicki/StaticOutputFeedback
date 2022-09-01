@@ -6,8 +6,13 @@
 %
 % This script is for the purpose of testing some LMI based iteration for 
 % static output-feedback Hinfty design.
-%  ! Note that the default solvers is SDPT3 called from Yalmip, but     !
+
+
+
+%  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+%  ! Note that the default solver is SDPT3 called from Yalmip, but      !
 %  ! using Mosek leads to much better results                           !
+%  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
 % Clean up.
