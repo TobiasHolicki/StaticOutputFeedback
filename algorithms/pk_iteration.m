@@ -2,8 +2,6 @@
 % File    : pk_iteration.m                                                %
 %                                                                         %
 % Author  : Tobias Holicki                                                %
-% Version : 02                                                            %
-% Date    : 02.08.2022                                                    %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % For a given continuous- or discrete-time LTI system

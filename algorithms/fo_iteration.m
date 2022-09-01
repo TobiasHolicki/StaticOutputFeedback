@@ -2,8 +2,6 @@
 % File    : fo_iteration.m                                                %
 %                                                                         %
 % Author  : Tobias Holicki                                                %
-% Version : 05                                                            %
-% Date    : 03.08.2022                                                    %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % For a given continuous- or discrete-time LTI system

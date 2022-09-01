@@ -1,9 +1,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % File    : svar_iteration.m                                              %
 %                                                                         %
-% Author  : Tobias Holicki                                                %
-% Version : 05                                                            %
-% Date    : 02.08.2022                                                    %
+% Author  : Tobias Holicki                                                %#
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % For a given continuous- or discrete-time LTI system
